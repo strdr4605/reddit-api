@@ -25,38 +25,52 @@ glob('html/*.html',function(err, files){
      })
 })
 
-request('http://www.reddit.com/subreddits.json', function (error, response, body) {
-  if (!error && response.statusCode == 200) {
-    let obj = JSON.parse(body)
-    for(let i = 0; i < categories; i++){
+getCategories(categories, '')
 
-      let htmlHead = '<!DOCTYPE html><html><head><meta charset="utf-8">'
-      let htmlBody = '<body><ul>'
+function getCategories(amount, after) {
+  request('http://www.reddit.com/subreddits.json?after=' + after, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      let obj = JSON.parse(body)
+      let k = amount > 25 ? 25 : amount
+      for(let i = 0; i < k; i++){
 
-      let category = obj['data']['children'][i]['data']['url']
-      let categoryUrl = category.slice(0, -1)
-      htmlHead += '<title>' + category.split('/')[2] + '</title></head>'
+        let htmlHead = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+        let htmlBody = '<body><ol>'
 
-      request('http://www.reddit.com' + categoryUrl + '.json', function (error, response, body) {
-        console.log(category, ' = ', categoryUrl)
-        if (!error && response.statusCode == 200) {
-          let categoryObj = JSON.parse(body)
-          for(let j = 0; j < articles; j++){
-            htmlBody += '<li><a href="' + categoryObj['data']['children'][j]['data']['url'] + '" >' + categoryObj['data']['children'][j]['data']['title'] + '</a></li>'
+        let category = obj['data']['children'][i]['data']['url']
+        let categoryUrl = category.slice(0, -1)
+        htmlHead += '<title>' + category.split('/')[2] + '</title></head>'
+        let cat = category.split('/')[2]
+        getArticles(cat, categoryUrl, articles, '', htmlHead, htmlBody)
+      }
+
+      if(amount > 25) getCategories(amount - 25, obj['data']['after'])
+    }
+  })
+}
+
+
+
+function getArticles(cat ,categoryUrl, amount, after, htmlHead, htmlBody) {
+  request('http://www.reddit.com' + categoryUrl + '.json?after=' + after, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      let categoryObj = JSON.parse(body)
+      let k = amount > 25 ? 25 : amount
+      for(let j = 0; j < k; j++){
+        htmlBody += '<li><a href="' + categoryObj['data']['children'][j]['data']['url'] + '" >' + categoryObj['data']['children'][j]['data']['title'] + '</a></li>'
+      }
+
+      if(amount > 25) getArticles(cat, categoryUrl, amount - 25, categoryObj['data']['after'], htmlHead, htmlBody)
+
+      htmlBody += '</ol></body></html>'
+      let html = htmlHead + htmlBody
+      fs.writeFile('html/' + cat + '.html', html, function(err) {
+          if(err) {
+              return console.log(err)
           }
-          htmlBody += '</ul></body></html>'
-
-          let cat = category.split('/')[2]
-          let html = htmlHead + htmlBody
-          fs.writeFile('html/' + cat + '.html', html, function(err) {
-              if(err) {
-                  return console.log(err)
-              }
-              console.log(cat + '.html was saved!')
-              open('html/' + cat + '.html')
-          })
-        }
+          console.log(cat + '.html was saved!')
+          // open('html/' + cat + '.html')
       })
     }
-  }
-})
+  })
+}
