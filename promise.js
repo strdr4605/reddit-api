@@ -85,10 +85,10 @@ let getArticles = async (articlesUrl) => {
 const main = async () => {
   let categories = []
   let categoriesUrl = subredditsUrl
-  while (categories.length < categoriesAmount) {
+  while (categories.length <= categoriesAmount) {
     const { data: { children, after } } = await promiseRequest(categoriesUrl)
 
-    while (categories.length < categoriesAmount && children.length) {
+    while (categories.length <= categoriesAmount && children.length) {
       categories.push(children.shift())
     }
 
