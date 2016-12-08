@@ -61,16 +61,17 @@ function getArticles(cat ,categoryUrl, amount, after, htmlHead, htmlBody) {
       }
 
       if(amount > 25) getArticles(cat, categoryUrl, amount - 25, categoryObj['data']['after'], htmlHead, htmlBody)
-
-      htmlBody += '</ol></body></html>'
-      let html = htmlHead + htmlBody
-      fs.writeFile('html/' + cat + '.html', html, function(err) {
-          if(err) {
-              return console.log(err)
-          }
-          console.log(cat + '.html was saved!')
-          // open('html/' + cat + '.html')
-      })
+      else {
+        htmlBody += '</ol></body></html>'
+        let html = htmlHead + htmlBody
+        fs.writeFile('html/' + cat + '.html', html, function(err) {
+            if(err) {
+                return console.log(err)
+            }
+            console.log(cat + '.html was saved!')
+            open('html/' + cat + '.html')
+        })
+      }
     }
   })
 }
